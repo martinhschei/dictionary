@@ -15,8 +15,8 @@ class WordLookUpController extends Controller
 		foreach($words as $word) {
 			$next = next($words);
 			$stack->push("
-				MERGE (w:WORD {body: '{$word}'})
-				MERGE (w_next:WORD {body: '{$next}'})
+				MERGE (w:WORD { body: '{$word}' })
+				MERGE (w_next:WORD { body: '{$next}' })
 				MERGE (w)-[rel:BEFORE]->(w_next)
 					ON CREATE SET rel.count = 1
 					ON MATCH SET rel.count = rel.count + 1
@@ -30,9 +30,9 @@ class WordLookUpController extends Controller
     	$graph = new Graph();
     	$query = "
 			MATCH
-			   	(wBefore:WORD)-[:BEFORE]->(w:WORD)
-			   	where w.body contains '{$word}'
-			   	return wBefore
+			   	(wordBefore:WORD)-[:BEFORE]->(w:WORD)
+			   	WHERE w.body CONTAINS '{$word}'
+			   	return wordBefore
     	";
     	$result = $graph->run($query);
     	dd($result);

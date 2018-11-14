@@ -1,5 +1,5 @@
 <?php
 
-Route::post('/create', 'WordLookUpController@create');
+Route::post('/create', 'DictionaryController@create');
 
-Route::get('/lookup/{word}', 'WordLookUpController@show');
+Route::get('/lookup/{word}', 'DictionaryController@show');
