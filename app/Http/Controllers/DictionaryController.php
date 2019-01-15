@@ -33,22 +33,20 @@ class DictionaryController extends Controller
     public function show($word)
     {
     	$graph = new Graph();
+    	
     	$query = "
 			MATCH
-			   	(wordBefore:WORD)<-[rel:BEFORE]-(w:WORD)
-			   	WHERE w.body CONTAINS '{$word}'
-			   	return wordBefore.body as word, rel.count as count
+			   	(w:WORD)-[rel:BEFORE]->(wordBefore:WORD)
+			   	WHERE toLower(w.body) STARTS WITH toLower('{$word}') 
+			   	return wordBefore.body as word, rel.count as count, w.body as spelling
     	";
 
-    	$words = collect($graph->records($query))->map(function($record) {
+    	return collect($graph->run($query)->raw()->records())->map(function($word) {
     		return [
-    			'word' => $record->get('word'),
-    			'count' => $record->get('count'),
+    			'word' => $word->value('word'),
+    			'count' => $word->value('count'),
+    			'spelling' => $word->value('spelling'),
     		];
-    	})->sortBy('count')->values();
-
-    	return response()->json([
-    		'words' => $words,
-    	]);
+    	});
     }
 }

@@ -17,7 +17,10 @@ window.Vue = require('vue');
  * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
  */
 
-Vue.component('example-component', require('./components/ExampleComponent.vue'));
+Vue.component('dictionary', require('./components/dictionary.vue'));
+
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead';
+Vue.component('vue-bootstrap-typeahead', VueBootstrapTypeahead);
 
 // const files = require.context('./', true, /\.vue$/i)
 
