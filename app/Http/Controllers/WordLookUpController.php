@@ -2,39 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use Graph\Graph;
+use App\Graph;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class WordLookUpController extends Controller
 {
 	public function create()
 	{
-		$graph = new Graph();
-		$stack = $graph->stack();
-		$words = explode(' ', request('text'));
+		$words = explode(' ', request('sentence'));
+		$queryStack = [];
 
-		foreach($words as $word) {
-			$next = next($words);
-			$stack->push("
-				MERGE (w:WORD { body: '{$word}' })
-				MERGE (w_next:WORD { body: '{$next}' })
-				MERGE (w)-[rel:BEFORE]->(w_next)
-					ON CREATE SET rel.count = 1
-					ON MATCH SET rel.count = rel.count + 1
-			");
+		if (count($words) > 1) {
+			foreach($words as $key => $word) {
+				$next = next($words);
+				if (strlen($next) > 0) {
+					$queryStack[] = ("
+						MERGE (w_${key}:WORD { body: '{$word}'})
+						MERGE (w_${key}_next:WORD { body: '{$next}' })
+						MERGE (w_${key})-[rel_${key}:NEXT]->(w_${key}_next) 
+							ON CREATE SET 
+								rel_${key}.count = 1
+							ON MATCH SET 
+								rel_${key}.count = rel_${key}.count + 1
+					");
+				}
+			}
 		}
-		$graph->runStack($stack);
+
+		Graph::run(join("", $queryStack));
 	}
 
     public function show($word)
     {
-    	$graph = new Graph();
+		$words = explode(" ", $word);
+		
+		if (count($words) == 1) {
+			$word = $words[0];
+		}
+
+		if (count($words) > 1) {
+			$word = $words[count($words) - 1];
+		}
+
     	$query = "
 			MATCH
-			   	(wordBefore:WORD)-[:BEFORE]->(w:WORD)
+			   	(nextWord:WORD)<-[:NEXT]-(w:WORD)
 			   	WHERE w.body CONTAINS '{$word}'
-			   	return wordBefore
+			   	return nextWord
     	";
-    	$result = $graph->run($query);
-    	dd($result);
+
+		$results = [];
+
+    	foreach(Graph::run($query) as $result) {
+			$results[] = Arr::get($result->get('nextWord'), 'body');
+		}
+
+		return collect($results)->unique()->values()->all();
     }
 }
